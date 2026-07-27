@@ -1,5 +1,5 @@
---- /data/data/com.termux/files/home/tmp-patch-gen/readseek-upstream/packages/pi-readseek/src/readseek-client.ts	2026-07-27 13:19:47.684019384 +0500
-+++ /data/data/com.termux/files/home/tmp-patch-gen/readseek-fork/packages/pi-readseek/src/readseek-client.ts	2026-07-27 13:19:48.268019384 +0500
+--- a/packages/pi-readseek/src/readseek-client.ts
++++ b/packages/pi-readseek/src/readseek-client.ts
 @@ -254,6 +254,7 @@
  }
  
@@ -8,8 +8,8 @@
  	"darwin-arm64": "@jarkkojs/readseek-darwin-arm64",
  	"linux-arm64": "@jarkkojs/readseek-linux-arm64",
  	"linux-x64": "@jarkkojs/readseek-linux-x64",
---- /data/data/com.termux/files/home/tmp-patch-gen/readseek-upstream/packages/pi-readseek/package.json	2026-07-27 13:19:47.676019384 +0500
-+++ /data/data/com.termux/files/home/tmp-patch-gen/readseek-fork/packages/pi-readseek/package.json	2026-07-27 13:19:48.264019384 +0500
+--- a/packages/pi-readseek/package.json
++++ b/packages/pi-readseek/package.json
 @@ -4,7 +4,7 @@
    "description": "Pi extension for readseek-backed hash-anchored read/edit/grep, structural code maps, structural search, and file exploration",
    "type": "module",

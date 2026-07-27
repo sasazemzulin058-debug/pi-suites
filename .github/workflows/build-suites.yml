@@ -63,13 +63,9 @@ jobs:
 
       - name: Apply Android/Termux patches
         run: |
-          python3 - <<'PY'
-          p = 'vendor/readseek/packages/pi-readseek/src/readseek-client.ts'
-          s = open(p).read()
-          needle = 'const READSEEK_PLATFORM_PACKAGES: Record<string, string> = {'
-          s = s.replace(needle, needle + '\n\t"android-arm64": "@sasazemzulin058-debug/readseek-android-arm64",', 1)
-          open(p, 'w').write(s)
-          PY
+          git -C vendor/readseek apply --check ../../patches/readseek-client.patch
+          git -C vendor/readseek apply ../../patches/readseek-client.patch
+          grep -q '"android-arm64"' vendor/readseek/packages/pi-readseek/src/readseek-client.ts
           (cd vendor/pi-shazam        && git apply ../../patches/pi-shazam.patch)
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
           (cd vendor/context-mode     && git apply ../../patches/context-mode.patch)
