@@ -15,7 +15,7 @@ RELEASE_URL="https://github.com/sasazemulin058-debug/pi-suites/releases/download
 download_asset() {
   asset="$1"
   out="$2"
-  curl -fL --retry 3 --connect-timeout 10 "$RELEASE_URL/$asset" -o "$out"
+  curl -fL --retry 3 --connect-timeout 10 "$RELEASE_URL/$asset?download=1" -o "$out"
 }
 
 echo "--> Installing ast-grep CLI binary..."
