@@ -30,7 +30,13 @@ install -m 755 "$TMP_DIR/readseek" "$BIN_DIR/readseek"
 download_asset libfff_c.so "$TMP_DIR/libfff_c.so"
 install -m 755 "$TMP_DIR/libfff_c.so" "${PREFIX}/lib/libfff_c.so"
 
-mkdir -p "$AGENT_NPM"
+mkdir -p "$AGENT_NPM/node_modules/@earendil-works"
+PI_GLOBAL="${PREFIX}/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works"
+for runtime in pi-ai pi-coding-agent pi-tui; do
+  if [ -e "$PI_GLOBAL/$runtime" ]; then
+    ln -sfn "$PI_GLOBAL/$runtime" "$AGENT_NPM/node_modules/@earendil-works/$runtime"
+  fi
+done
 for pkg in pi-search-suite pi-memory-suite pi-execution-suite; do
   echo "--> Installing $pkg..."
   download_asset "$pkg-1.0.0.tgz" "$TMP_DIR/$pkg.tgz"
