@@ -166,7 +166,7 @@ jobs:
         run: |
           set -e
           mkdir -p artifacts suites/pi-search-suite/dist suites/pi-memory-suite/dist suites/pi-execution-suite/dist
-          ext='--external:node:* --external:@earendil-works/pi-tui --external:@earendil-works/pi-coding-agent --external:@ast-grep/napi --external:@ast-grep/napi-* --external:*.node --external:typebox --external:better-sqlite3'
+          ext='--external:node:* --external:@earendil-works/pi-tui --external:@earendil-works/pi-coding-agent --external:@ast-grep/napi --external:@ast-grep/napi-* --external:*.node'
           export NODE_PATH="$GITHUB_WORKSPACE/node_modules"
           esbuild vendor/pi-lens/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-lens.js $ext
           esbuild vendor/pi-shazam/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-shazam.js $ext
