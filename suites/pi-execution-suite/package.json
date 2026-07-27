@@ -1,0 +1,11 @@
+{
+  "name": "pi-execution-suite",
+  "version": "1.0.0",
+  "description": "Unified execution & subagents suite for Pi Coding Agent (precompiled CJS)",
+  "main": "dist/index.js",
+  "pi": {
+    "extensions": [
+      "./dist/index.js"
+    ]
+  }
+}

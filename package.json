@@ -1,0 +1,7 @@
+{
+  "name": "pi-suites-monorepo",
+  "private": true,
+  "workspaces": [
+    "suites/*"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "pi-memory-suite",
+  "version": "1.0.0",
+  "description": "Unified memory & context suite for Pi Coding Agent (precompiled CJS)",
+  "main": "dist/index.js",
+  "pi": {
+    "extensions": [
+      "./dist/index.js"
+    ]
+  }
+}
