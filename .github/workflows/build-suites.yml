@@ -169,18 +169,14 @@ jobs:
           ext='--external:node:* --external:@earendil-works/pi-tui --external:@earendil-works/pi-coding-agent --external:@ast-grep/napi --external:@ast-grep/napi-* --external:*.node'
           export NODE_PATH="$GITHUB_WORKSPACE/node_modules"
           esbuild vendor/pi-lens/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-lens.js $ext
-          esbuild vendor/pi-shazam/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-shazam.js $ext
           for file in suites/pi-search-suite/dist/*.js suites/pi-memory-suite/dist/*.js suites/pi-execution-suite/dist/*.js; do
             sed -i 's/var import_meta = {}/var import_meta = { url: require("url").pathToFileURL(__filename).href }/g; s/var import_meta2 = {}/var import_meta2 = { url: require("url").pathToFileURL(__filename).href }/g; s/var import_meta3 = {}/var import_meta3 = { url: require("url").pathToFileURL(__filename).href }/g; s/var import_meta4 = {}/var import_meta4 = { url: require("url").pathToFileURL(__filename).href }/g' "$file"
           done
-          esbuild vendor/readseek/packages/pi-readseek/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-readseek.js $ext
           esbuild vendor/pi-hermes-memory/src/index.ts --bundle --platform=node --format=cjs --outfile=suites/pi-memory-suite/dist/pi-hermes-memory.js $ext
           cp suites/.suite-entries/pi-search-suite.js suites/pi-search-suite/dist/index.js
           cp suites/.suite-entries/pi-memory-suite.js suites/pi-memory-suite/dist/index.js
           cp suites/.suite-entries/pi-execution-suite.js suites/pi-execution-suite/dist/index.js
           test -s suites/pi-search-suite/dist/pi-lens.js
-          test -s suites/pi-search-suite/dist/pi-shazam.js
-          test -s suites/pi-search-suite/dist/pi-readseek.js
           node - <<'NODE'
           for (const name of ['pi-search-suite', 'pi-memory-suite', 'pi-execution-suite']) {
             const path = `./suites/${name}/dist/index.js`;

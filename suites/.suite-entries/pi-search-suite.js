@@ -12,8 +12,6 @@ function tryLoad(rel, name) {
 module.exports = function piSearchSuite(pi) {
   var targets = [
     ['./pi-lens.js', 'pi-lens'],
-    ['./pi-shazam.js', 'pi-shazam'],
-    ['./pi-readseek.js', 'pi-readseek'],
   ];
   for (var i = 0; i < targets.length; i++) {
     var fn = tryLoad(targets[i][0], targets[i][1]);
