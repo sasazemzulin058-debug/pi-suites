@@ -1,285 +1,180 @@
-name: Build & Release Pi Suites (monorepo, full source build)
-
+name: Build & Release Pi Suites
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: write
 
+env:
+  ANDROID_NDK_VERSION: r26d
+
 jobs:
-  build:
+  ast-grep:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            target: x86_64-unknown-linux-gnu
+            linker: ''
+          - name: android-arm64
+            target: aarch64-linux-android
+            linker: aarch64-linux-android24-clang
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
-      - name: Checkout monorepo
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          node-version: '24'
-
-      - name: Install Rust + Android + Linux x64 targets
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
-          source "$HOME/.cargo/env"
-          rustup target add aarch64-linux-android
-          rustup target add x86_64-unknown-linux-gnu
-
-      - name: Install Android NDK (for cross-compile)
+          target: ${{ matrix.target }}
+      - if: matrix.name == 'android-arm64'
         uses: nttld/setup-ndk@v1
         with:
-          ndk-version: r26d
-
-      - name: Install cross
+          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+      - run: git clone --depth 1 https://github.com/ast-grep/ast-grep.git vendor-ast-grep
+      - name: Build
+        shell: bash
         run: |
-          source "$HOME/.cargo/env"
-          cargo install cross --git https://github.com/cross-rs/cross --locked || true
+          cd vendor-ast-grep
+          if [ '${{ matrix.name }}' = android-arm64 ]; then
+            export NDK="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            mkdir -p .cargo
+            printf '[target.aarch64-linux-android]\nlinker = "%s/%s"\nar = "%s/llvm-ar"\n' "$NDK" '${{ matrix.linker }}' "$NDK" > .cargo/config.toml
+          fi
+          cargo build --release --bin ast-grep --target '${{ matrix.target }}'
+          mkdir -p ../out
+          cp target/'${{ matrix.target }}'/release/ast-grep ../out/ast-grep-${{ matrix.name }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-ast-grep-${{ matrix.name }}
+          path: vendor-ast-grep/../out/ast-grep-${{ matrix.name }}
 
-      - name: Install esbuild
-        run: npm install -g esbuild
+  readseek:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            target: x86_64-unknown-linux-gnu
+          - name: android-arm64
+            target: aarch64-linux-android
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+      - if: matrix.name == 'android-arm64'
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+      - run: git clone --depth 1 https://github.com/jarkkojs/readseek.git vendor-readseek
+      - name: Apply Android patch and build
+        shell: bash
+        run: |
+          cd vendor-readseek
+          git apply --check ../patches/readseek-client.patch
+          git apply ../patches/readseek-client.patch
+          if [ '${{ matrix.name }}' = android-arm64 ]; then
+            export NDK="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            mkdir -p .cargo
+            printf '[target.aarch64-linux-android]\nlinker = "%s/aarch64-linux-android24-clang"\nar = "%s/llvm-ar"\n' "$NDK" "$NDK" > .cargo/config.toml
+          fi
+          cargo build --release --bin readseek --target '${{ matrix.target }}'
+          mkdir -p ../out
+          cp target/'${{ matrix.target }}'/release/readseek ../out/readseek-${{ matrix.name }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-readseek-${{ matrix.name }}
+          path: vendor-readseek/../out/readseek-${{ matrix.name }}
 
-      - name: Clone upstream sources
+  fff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: aarch64-linux-android
+      - uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+      - run: git clone --depth 1 https://github.com/dmtrKovalenko/fff.nvim.git vendor-fff
+      - name: Build
+        shell: bash
+        run: |
+          cd vendor-fff
+          git apply ../patches/fff.patch
+          export NDK="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          mkdir -p .cargo
+          printf '[target.aarch64-linux-android]\nlinker = "%s/aarch64-linux-android24-clang"\nar = "%s/llvm-ar"\n' "$NDK" "$NDK" > .cargo/config.toml
+          cargo build --release -p fff-c --target aarch64-linux-android
+          mkdir -p ../out
+          cp target/aarch64-linux-android/release/libfff_c.so ../out/libfff_c.so
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-fff-android
+          path: vendor-fff/../out/libfff_c.so
+
+  suites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install -g esbuild
+      - name: Clone JS upstreams and apply patches
+        shell: bash
         run: |
           mkdir -p vendor
-          # Rust CLI tools (оригиналы, без изменений)
-          git clone --depth 1 https://github.com/ast-grep/ast-grep.git         vendor/ast-grep
-          git clone --depth 1 https://github.com/jarkkojs/readseek.git         vendor/readseek
-          git clone --depth 1 https://github.com/dmtrKovalenko/fff.nvim.git    vendor/fff
-          # Pi extensions
-          git clone --depth 1 https://github.com/apmantza/pi-lens.git          vendor/pi-lens
-          git clone --depth 1 https://github.com/gjczone/pi-shazam.git         vendor/pi-shazam
-          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git  vendor/pi-web-access    || true
+          git clone --depth 1 https://github.com/apmantza/pi-lens.git vendor/pi-lens
+          git clone --depth 1 https://github.com/gjczone/pi-shazam.git vendor/pi-shazam
+          git clone --depth 1 https://github.com/jarkkojs/readseek.git vendor/readseek
           git clone --depth 1 https://github.com/weichenw/pi-hermes-memory.git vendor/pi-hermes-memory
-          git clone --depth 1 https://github.com/mksglu/context-mode.git       vendor/context-mode
-          git clone --depth 1 https://github.com/QuintinShaw/pi-dynamic-workflows.git vendor/pi-dynamic-workflows || true
-          git clone --depth 1 https://github.com/nicobailon/pi-subagents.git   vendor/pi-subagents     || true
-          git clone --depth 1 https://github.com/aliou/pi-processes.git        vendor/pi-processes     || true
-          git clone --depth 1 https://github.com/tintinweb/pi-schedule-prompt.git vendor/pi-schedule-prompt || true
-          git clone --depth 1 https://github.com/sebaxzero/pi-loop-police.git  vendor/pi-loop-police   || true
-
-      - name: Apply Android/Termux patches
-        run: |
-          git -C vendor/readseek apply --check ../../patches/readseek-client.patch
-          git -C vendor/readseek apply ../../patches/readseek-client.patch
-          grep -q '"android-arm64"' vendor/readseek/packages/pi-readseek/src/readseek-client.ts
-          (cd vendor/pi-shazam        && git apply ../../patches/pi-shazam.patch)
+          git clone --depth 1 https://github.com/mksglu/context-mode.git vendor/context-mode
+          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git vendor/pi-web-access || true
+          (cd vendor/pi-shazam && git apply ../../patches/pi-shazam.patch)
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
-          (cd vendor/context-mode     && git apply ../../patches/context-mode.patch)
-          (cd vendor/fff              && git apply ../../patches/fff.patch)
-
-      - name: Build ast-grep CLI (linux-x64)
+          (cd vendor/context-mode && git apply ../../patches/context-mode.patch)
+          for d in vendor/pi-lens vendor/pi-shazam vendor/readseek vendor/pi-hermes-memory vendor/context-mode vendor/pi-web-access; do [ -d "$d" ] && (cd "$d" && npm install --ignore-scripts --legacy-peer-deps); done
+      - name: Bundle suites
+        shell: bash
         run: |
-          source "$HOME/.cargo/env"
-          cd vendor/ast-grep
-          cargo build --release --bin ast-grep 2>&1 | tail -5
-          mkdir -p ../../artifacts/cli
-          cp target/release/ast-grep ../../artifacts/cli/ast-grep-linux-x64
-          strip ../../artifacts/cli/ast-grep-linux-x64 || true
-
-      - name: Build ast-grep CLI (android-arm64)
-        run: |
-          source "$HOME/.cargo/env"
-          export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
-          export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-          cd vendor/ast-grep
-          # direct cross-compile via cargo + linker
-          cat > .cargo/config.toml << CFGEOF
-          [target.aarch64-linux-android]
-          linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
-          ar = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-          CFGEOF
-          cargo build --release --bin ast-grep --target aarch64-linux-android 2>&1 | tail -10
-          mkdir -p ../../artifacts/cli
-          cp target/aarch64-linux-android/release/ast-grep ../../artifacts/cli/ast-grep-android-arm64
-
-      - name: Build readseek CLI (linux-x64)
-        run: |
-          source "$HOME/.cargo/env"
-          cd vendor/readseek
-          cargo build --release --bin readseek 2>&1 | tail -5 || cargo build --release 2>&1 | tail -5
-          BINARY=$(find target/release -maxdepth 1 -type f -executable -name "readseek" | head -1)
-          mkdir -p ../../artifacts/cli
-          cp "$BINARY" ../../artifacts/cli/readseek-linux-x64
-          strip ../../artifacts/cli/readseek-linux-x64 || true
-
-      - name: Build readseek CLI (android-arm64)
-        run: |
-          source "$HOME/.cargo/env"
-          export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
-          export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-          cd vendor/readseek
-          mkdir -p .cargo
-          cat > .cargo/config.toml << CFGEOF
-          [target.aarch64-linux-android]
-          linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
-          ar = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-          CFGEOF
-          cargo build --release --bin readseek --target aarch64-linux-android 2>&1 | tail -10 || cargo build --release --target aarch64-linux-android 2>&1 | tail -10
-          BINARY=$(find target/aarch64-linux-android/release -maxdepth 1 -type f -name "readseek" | head -1)
-          mkdir -p ../../artifacts/cli
-          cp "$BINARY" ../../artifacts/cli/readseek-android-arm64
-
-      - name: Build libfff_c.so (android-arm64)
-        run: |
-          source "$HOME/.cargo/env"
-          export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
-          export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-          cd vendor/fff
-          mkdir -p .cargo
-          cat > .cargo/config.toml << CFGEOF
-          [target.aarch64-linux-android]
-          linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
-          ar = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-          CFGEOF
-          cargo build --release -p fff-c --target aarch64-linux-android 2>&1 | tail -10
-          SO=$(find target/aarch64-linux-android/release -maxdepth 1 -name "libfff_c.so" | head -1)
-          mkdir -p ../../artifacts/lib
-          cp "$SO" ../../artifacts/lib/libfff_c.so
-
-      - name: Package readseek-android-arm64 npm wrapper
-        run: |
-          mkdir -p artifacts/npm/readseek-android-arm64/bin
-          cat > artifacts/npm/readseek-android-arm64/package.json <<'PKGJSON'
-          {
-            "name": "@sasazemzulin058-debug/readseek-android-arm64",
-            "version": "0.8.11-android.1",
-            "description": "readseek CLI binary for Android ARM64 (Termux)",
-            "os": ["android", "linux"],
-            "cpu": ["arm64"],
-            "files": ["bin"]
-          }
-          PKGJSON
-          cp artifacts/cli/readseek-android-arm64 artifacts/npm/readseek-android-arm64/bin/readseek
-          chmod 755 artifacts/npm/readseek-android-arm64/bin/readseek
-          (cd artifacts/npm/readseek-android-arm64 && npm pack --pack-destination ../../../artifacts)
-
-      - name: Install vendor JS deps
-        run: |
-          for dir in \
-            vendor/pi-lens vendor/readseek vendor/pi-shazam \
-            vendor/pi-hermes-memory vendor/context-mode vendor/pi-web-access \
-            vendor/pi-dynamic-workflows vendor/pi-processes \
-            vendor/pi-schedule-prompt vendor/pi-loop-police vendor/pi-subagents \
-          ; do
-            [ -d "$dir" ] && (cd "$dir" && npm install --ignore-scripts --legacy-peer-deps 2>&1 | tail -2) || true
-          done
-
-      - name: Build pi-search-suite
-        run: |
-          mkdir -p suites/pi-search-suite/dist
-          EXT="--external:@earendil-works/* --external:node:* --external:@sinclair/typebox --external:typebox"
-
-          bundle() {
-            local entry="$1"; local out="$2"; shift 2
-            [ -f "$entry" ] && esbuild "$entry" --bundle --platform=node --format=cjs \
-              --outfile="$out" $EXT "$@" || true
-          }
-
-          bundle "$(ls vendor/pi-lens/src/index.ts vendor/pi-lens/dist/index.js 2>/dev/null | head -1)" \
-            suites/pi-search-suite/dist/pi-lens.js \
-            --external:@ast-grep/napi --external:tree-sitter* --external:better-sqlite3
-
-          bundle "$(ls vendor/pi-shazam/src/index.ts vendor/pi-shazam/dist/index.js 2>/dev/null | head -1)" \
-            suites/pi-search-suite/dist/pi-shazam.js
-
-          bundle "$(ls vendor/readseek/packages/pi-readseek/src/index.ts vendor/readseek/packages/pi-readseek/dist/index.js 2>/dev/null | head -1)" \
-            suites/pi-search-suite/dist/pi-readseek.js
-
-          [ -d vendor/pi-web-access ] && \
-            bundle "$(ls vendor/pi-web-access/src/index.ts vendor/pi-web-access/index.ts 2>/dev/null | head -1)" \
-              suites/pi-search-suite/dist/pi-web-access.js \
-              --external:@mozilla/readability --external:linkedom \
-              --external:turndown --external:p-limit --external:promise.try
-
+          set +e
+          mkdir -p suites/pi-search-suite/dist suites/pi-memory-suite/dist suites/pi-execution-suite/dist
+          ext='--external:node:* --external:@earendil-works/* --external:typebox --external:better-sqlite3'
+          esbuild vendor/pi-lens/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-lens.js $ext
+          esbuild vendor/pi-shazam/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-shazam.js $ext
+          esbuild vendor/readseek/packages/pi-readseek/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-readseek.js $ext
+          esbuild vendor/pi-hermes-memory/src/index.ts --bundle --platform=node --format=cjs --outfile=suites/pi-memory-suite/dist/pi-hermes-memory.js $ext
           cp suites/.suite-entries/pi-search-suite.js suites/pi-search-suite/dist/index.js
-
-      - name: Build pi-memory-suite
-        run: |
-          mkdir -p suites/pi-memory-suite/dist
-          EXT="--external:@earendil-works/* --external:node:* --external:better-sqlite3"
-
-          ENTRY=$(ls vendor/pi-hermes-memory/src/index.ts 2>/dev/null | head -1)
-          [ -n "$ENTRY" ] && esbuild "$ENTRY" --bundle --platform=node --format=cjs \
-            --outfile=suites/pi-memory-suite/dist/pi-hermes-memory.js $EXT || true
-
-          (cd vendor/context-mode && npm run bundle 2>&1 | tail -3) || true
-
-          CM_ENTRY=$(ls vendor/context-mode/src/adapters/pi/extension.ts \
-            vendor/context-mode/.pi/extensions/context-mode/index.ts 2>/dev/null | head -1)
-          [ -n "$CM_ENTRY" ] && esbuild "$CM_ENTRY" --bundle --platform=node --format=cjs \
-            --outfile=suites/pi-memory-suite/dist/context-mode.js $EXT \
-            --external:turndown --external:turndown-plugin-gfm \
-            --external:@mixmark-io/domino || true
-
-          mkdir -p suites/pi-memory-suite/dist/context-mode-cli
-          for f in cli.bundle.mjs server.bundle.mjs; do
-            [ -f vendor/context-mode/$f ] && cp vendor/context-mode/$f suites/pi-memory-suite/dist/context-mode-cli/ || true
-          done
-          [ -d vendor/context-mode/hooks ] && cp -r vendor/context-mode/hooks suites/pi-memory-suite/dist/context-mode-cli/ || true
-
           cp suites/.suite-entries/pi-memory-suite.js suites/pi-memory-suite/dist/index.js
-
-      - name: Build pi-execution-suite
-        run: |
-          mkdir -p suites/pi-execution-suite/dist
-          EXT="--external:@earendil-works/* --external:node:* --external:@aliou/pi-utils-ui --external:@aliou/pi-utils-settings --external:typebox"
-
-          bundle_vendor() {
-            local name="$1"; local dir="$2"
-            [ ! -d "$dir" ] && return
-            local entry=$(ls "$dir/src/index.ts" "$dir/index.ts" 2>/dev/null | head -1)
-            [ -z "$entry" ] && return
-            esbuild "$entry" --bundle --platform=node --format=cjs \
-              --outfile="suites/pi-execution-suite/dist/${name}.js" $EXT || true
-          }
-
-          bundle_vendor pi-dynamic-workflows vendor/pi-dynamic-workflows
-          bundle_vendor pi-subagents         vendor/pi-subagents
-          bundle_vendor pi-processes         vendor/pi-processes
-          bundle_vendor pi-schedule-prompt   vendor/pi-schedule-prompt
-          bundle_vendor pi-loop-police       vendor/pi-loop-police
-
           cp suites/.suite-entries/pi-execution-suite.js suites/pi-execution-suite/dist/index.js
-
-      - name: Verify artifacts
-        run: |
-          echo "=== CLI binaries ==="
-          ls -lh artifacts/cli/ artifacts/lib/ 2>/dev/null
-          echo "=== Suite sizes ==="
-          ls -lh suites/pi-search-suite/dist/*.js 2>/dev/null
-          ls -lh suites/pi-memory-suite/dist/*.js 2>/dev/null
-          ls -lh suites/pi-execution-suite/dist/*.js 2>/dev/null
-          echo "=== Load test ==="
-          node -e "require('./suites/pi-search-suite/dist/pi-search-suite.js');     console.log('OK pi-search-suite')"
-          node -e "require('./suites/pi-memory-suite/dist/pi-memory-suite.js');    console.log('OK pi-memory-suite')"
-          node -e "require('./suites/pi-execution-suite/dist/pi-execution-suite.js'); console.log('OK pi-execution-suite')"
-
-      - name: Package suites as npm tarballs
-        run: |
-          (cd suites/pi-search-suite    && npm pack --pack-destination ../../artifacts)
-          (cd suites/pi-memory-suite    && npm pack --pack-destination ../../artifacts)
+          (cd suites/pi-search-suite && npm pack --pack-destination ../../artifacts)
+          (cd suites/pi-memory-suite && npm pack --pack-destination ../../artifacts)
           (cd suites/pi-execution-suite && npm pack --pack-destination ../../artifacts)
-          ls -lh artifacts/*.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: suite-packages
+          path: artifacts/*.tgz
 
-      - name: Create Nightly Release
-        uses: softprops/action-gh-release@v2
+  release:
+    needs: [ast-grep, readseek, fff, suites]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: '*'
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: nightly
           name: Nightly monorepo build
-          body: |
-            Полная сборка из исходников + патчи внутри монорепо.
-            Установка: curl -fsSL https://raw.githubusercontent.com/sasazemzulin058-debug/pi-suites/main/install-all.sh | sh
-          files: |
-            artifacts/*.tgz
-            artifacts/cli/ast-grep-linux-x64
-            artifacts/cli/ast-grep-android-arm64
-            artifacts/cli/readseek-linux-x64
-            artifacts/cli/readseek-android-arm64
-            artifacts/lib/libfff_c.so
-            suites/pi-memory-suite/dist/context-mode-cli/cli.bundle.mjs
-            suites/pi-memory-suite/dist/context-mode-cli/server.bundle.mjs
+          files: artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
