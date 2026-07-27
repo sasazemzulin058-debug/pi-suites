@@ -63,7 +63,13 @@ jobs:
 
       - name: Apply Android/Termux patches
         run: |
-          patch -p0 vendor/readseek/packages/pi-readseek/src/readseek-client.ts < patches/readseek-client.patch || true
+          python3 - <<'PY'
+          p = 'vendor/readseek/packages/pi-readseek/src/readseek-client.ts'
+          s = open(p).read()
+          needle = 'const READSEEK_PLATFORM_PACKAGES: Record<string, string> = {'
+          s = s.replace(needle, needle + '\n\t"android-arm64": "@sasazemzulin058-debug/readseek-android-arm64",', 1)
+          open(p, 'w').write(s)
+          PY
           (cd vendor/pi-shazam        && git apply ../../patches/pi-shazam.patch)
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
           (cd vendor/context-mode     && git apply ../../patches/context-mode.patch)
@@ -82,7 +88,8 @@ jobs:
       - name: Build ast-grep CLI (android-arm64)
         run: |
           source "$HOME/.cargo/env"
-          export ANDROID_NDK_HOME="$ANDROID_NDK_HOME"
+          export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
+          export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
           cd vendor/ast-grep
           # direct cross-compile via cargo + linker
           cat > .cargo/config.toml << CFGEOF
@@ -107,7 +114,8 @@ jobs:
       - name: Build readseek CLI (android-arm64)
         run: |
           source "$HOME/.cargo/env"
-          export ANDROID_NDK_HOME="$ANDROID_NDK_HOME"
+          export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
+          export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
           cd vendor/readseek
           cat > .cargo/config.toml << CFGEOF
           [target.aarch64-linux-android]
@@ -122,7 +130,8 @@ jobs:
       - name: Build libfff_c.so (android-arm64)
         run: |
           source "$HOME/.cargo/env"
-          export ANDROID_NDK_HOME="$ANDROID_NDK_HOME"
+          export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
+          export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
           cd vendor/fff
           cat > .cargo/config.toml << CFGEOF
           [target.aarch64-linux-android]
