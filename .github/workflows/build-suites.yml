@@ -15,46 +15,75 @@ jobs:
       - name: Checkout monorepo
         uses: actions/checkout@v4
 
-      - name: Clone upstream sources
-        run: |
-          mkdir -p vendor
-          # Search suite
-          git clone --depth 1 https://github.com/gjczone/pi-shazam.git           vendor/pi-shazam
-          git clone --depth 1 https://github.com/jarkkojs/readseek.git            vendor/readseek
-          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git     vendor/pi-web-access || true
-          # Memory suite
-          git clone --depth 1 https://github.com/weichenw/pi-hermes-memory.git   vendor/pi-hermes-memory
-          git clone --depth 1 https://github.com/mksglu/context-mode.git         vendor/context-mode
-          # Execution suite
-          git clone --depth 1 https://github.com/quintinshaw/pi-dynamic-workflows.git vendor/pi-dynamic-workflows || true
-          git clone --depth 1 https://github.com/nicobailon/pi-subagents.git      vendor/pi-subagents || true
-          git clone --depth 1 https://github.com/aliou/pi-processes.git           vendor/pi-processes || true
-          git clone --depth 1 https://github.com/tintinweb/pi-schedule-prompt.git vendor/pi-schedule-prompt || true
-          git clone --depth 1 https://github.com/sebaxzero/pi-loop-police.git     vendor/pi-loop-police || true
-          # Shared: pix-mono + fff-node
-          git clone --depth 1 https://github.com/xynogen/pix-mono.git             vendor/pix-mono
-          git clone --depth 1 https://github.com/dmtrKovalenko/fff.nvim.git       vendor/fff
-
-      - name: Apply Android/Termux patches
-        run: |
-          cd vendor/pi-shazam       && git apply ../../patches/pi-shazam.patch       && cd ../..
-          cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch && cd ../..
-          cd vendor/context-mode    && git apply ../../patches/context-mode.patch     && cd ../..
-          cd vendor/pix-mono        && git apply ../../patches/pix-mono.patch         && cd ../..
-          cd vendor/fff             && git apply ../../patches/fff.patch              && cd ../..
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
 
-      - name: Install vendor npm deps
+      - name: Clone upstream sources
         run: |
-          cd vendor/pi-shazam && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
-          cd vendor/readseek  && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
-          cd vendor/pi-hermes-memory && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
-          cd vendor/context-mode     && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
-          cd vendor/pix-mono && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
+          mkdir -p vendor
+          # Search suite
+          git clone --depth 1 https://github.com/gjczone/pi-shazam.git             vendor/pi-shazam
+          git clone --depth 1 https://github.com/jarkkojs/readseek.git              vendor/readseek
+          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git       vendor/pi-web-access || true
+          # Memory suite
+          git clone --depth 1 https://github.com/weichenw/pi-hermes-memory.git     vendor/pi-hermes-memory
+          git clone --depth 1 https://github.com/mksglu/context-mode.git           vendor/context-mode
+          # Execution suite
+          git clone --depth 1 https://github.com/quintinshaw/pi-dynamic-workflows.git vendor/pi-dynamic-workflows || true
+          git clone --depth 1 https://github.com/nicobailon/pi-subagents.git        vendor/pi-subagents || true
+          git clone --depth 1 https://github.com/aliou/pi-processes.git             vendor/pi-processes || true
+          git clone --depth 1 https://github.com/tintinweb/pi-schedule-prompt.git   vendor/pi-schedule-prompt || true
+          git clone --depth 1 https://github.com/sebaxzero/pi-loop-police.git       vendor/pi-loop-police || true
+          # Shared
+          git clone --depth 1 https://github.com/xynogen/pix-mono.git               vendor/pix-mono
+          git clone --depth 1 https://github.com/dmtrKovalenko/fff.nvim.git         vendor/fff
+
+      - name: Apply Android/Termux patches
+        run: |
+          cd vendor/pi-shazam        && git apply ../../patches/pi-shazam.patch        && cd ../..
+          cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch && cd ../..
+          cd vendor/context-mode     && git apply ../../patches/context-mode.patch     && cd ../..
+          cd vendor/pix-mono         && git apply ../../patches/pix-mono.patch         && cd ../..
+          cd vendor/fff              && git apply ../../patches/fff.patch              && cd ../..
+
+      - name: Build upstream vendors that require compilation
+        run: |
+          # pi-shazam: tsc -> dist/
+          cd vendor/pi-shazam
+          npm install --ignore-scripts --legacy-peer-deps
+          npx tsc --skipLibCheck || true
+          cd ../..
+
+          # pi-hermes-memory: has src/index.ts - compile inline via esbuild
+          # context-mode: tsc -> build/
+          cd vendor/context-mode
+          npm install --ignore-scripts --legacy-peer-deps
+          npx tsc --skipLibCheck || true
+          cd ../..
+
+          # readseek pi-readseek: compile via tsc
+          cd vendor/readseek/packages/pi-readseek
+          npm install --ignore-scripts --legacy-peer-deps
+          npx tsc --skipLibCheck || true
+          cd ../../../..
+
+          # pi-dynamic-workflows: tsc -> dist/
+          if [ -d vendor/pi-dynamic-workflows ]; then
+            cd vendor/pi-dynamic-workflows
+            npm install --ignore-scripts --legacy-peer-deps
+            npx tsc --skipLibCheck || true
+            cd ../..
+          fi
+
+          # pi-schedule-prompt: tsc -> dist/
+          if [ -d vendor/pi-schedule-prompt ]; then
+            cd vendor/pi-schedule-prompt
+            npm install --ignore-scripts --legacy-peer-deps
+            npx tsc --skipLibCheck || true
+            cd ../..
+          fi
 
       - name: Install esbuild
         run: npm install -g esbuild
@@ -62,7 +91,6 @@ jobs:
       - name: Build pi-search-suite
         run: |
           cd suites/pi-search-suite
-          cat src/index.ts
           npx esbuild src/index.ts \
             --bundle --platform=node --target=node24 --format=cjs \
             --outfile=dist/pi-search-suite.js \
@@ -72,7 +100,10 @@ jobs:
             --external:tree-sitter* \
             --external:node:* \
             --external:better-sqlite3 \
-            --external:@sinclair/typebox || true
+            --external:@sinclair/typebox \
+            --external:typebox \
+            --external:@mozilla/readability \
+            --external:linkedom || true
 
       - name: Build pi-memory-suite
         run: |
@@ -82,7 +113,8 @@ jobs:
             --outfile=dist/pi-memory-suite.js \
             --external:@earendil-works/* \
             --external:node:* \
-            --external:better-sqlite3 || true
+            --external:better-sqlite3 \
+            --external:typebox || true
 
       - name: Build pi-execution-suite
         run: |
@@ -91,7 +123,18 @@ jobs:
             --bundle --platform=node --target=node24 --format=cjs \
             --outfile=dist/pi-execution-suite.js \
             --external:@earendil-works/* \
+            --external:@aliou/pi-utils-settings \
             --external:node:* || true
+
+      - name: Verify built artifacts
+        run: |
+          echo "=== Built artifacts ==="
+          ls -lh suites/pi-search-suite/dist/pi-search-suite.js   || echo "MISSING: pi-search-suite.js"
+          ls -lh suites/pi-memory-suite/dist/pi-memory-suite.js   || echo "MISSING: pi-memory-suite.js"
+          ls -lh suites/pi-execution-suite/dist/pi-execution-suite.js || echo "MISSING: pi-execution-suite.js"
+          node -e "require('./suites/pi-search-suite/dist/pi-search-suite.js');    console.log('✅ pi-search-suite: loads OK')"   || echo "❌ pi-search-suite load failed"
+          node -e "require('./suites/pi-memory-suite/dist/pi-memory-suite.js');   console.log('✅ pi-memory-suite: loads OK')"    || echo "❌ pi-memory-suite load failed"
+          node -e "require('./suites/pi-execution-suite/dist/pi-execution-suite.js'); console.log('✅ pi-execution-suite: loads OK')" || echo "❌ pi-execution-suite load failed"
 
       - name: Create Nightly Release
         uses: softprops/action-gh-release@v2
