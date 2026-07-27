@@ -25,12 +25,12 @@ jobs:
           git clone --depth 1 https://github.com/sasazemzulin058-debug/pi-hermes-memory.git vendor/pi-hermes-memory
           git clone --depth 1 https://github.com/sasazemzulin058-debug/context-mode.git vendor/context-mode
           git clone --depth 1 https://github.com/sasazemzulin058-debug/pix-mono.git vendor/pix-mono
-          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git vendor/pi-web-access
-          git clone --depth 1 https://github.com/quintinshaw/pi-dynamic-workflows.git vendor/pi-dynamic-workflows
+          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git vendor/pi-web-access || true
+          git clone --depth 1 https://github.com/quintinshaw/pi-dynamic-workflows.git vendor/pi-dynamic-workflows || true
           git clone --depth 1 https://github.com/nicobailon/pi-subagents.git vendor/pi-subagents || true
-          git clone --depth 1 https://github.com/aliou/pi-processes.git vendor/pi-processes
-          git clone --depth 1 https://github.com/aliou/pi-schedule-prompt.git vendor/pi-schedule-prompt
-          git clone --depth 1 https://github.com/aliou/pi-loop-police.git vendor/pi-loop-police
+          git clone --depth 1 https://github.com/aliou/pi-processes.git vendor/pi-processes || true
+          git clone --depth 1 https://github.com/tintinweb/pi-schedule-prompt.git vendor/pi-schedule-prompt || true
+          git clone --depth 1 https://github.com/sebaxzero/pi-loop-police.git vendor/pi-loop-police || true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
