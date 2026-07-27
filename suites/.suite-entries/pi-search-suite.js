@@ -14,7 +14,6 @@ module.exports = function piSearchSuite(pi) {
     ['./pi-lens.js', 'pi-lens'],
     ['./pi-shazam.js', 'pi-shazam'],
     ['./pi-readseek.js', 'pi-readseek'],
-    ['./pi-web-access.js', 'pi-web-access'],
   ];
   for (var i = 0; i < targets.length; i++) {
     var fn = tryLoad(targets[i][0], targets[i][1]);

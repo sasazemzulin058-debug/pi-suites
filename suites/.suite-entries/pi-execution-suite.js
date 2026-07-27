@@ -10,13 +10,7 @@ function tryLoad(rel, name) {
   return null;
 }
 module.exports = function piExecutionSuite(pi) {
-  var targets = [
-    ['./pi-dynamic-workflows.js', 'pi-dynamic-workflows'],
-    ['./pi-subagents.js', 'pi-subagents'],
-    ['./pi-processes.js', 'pi-processes'],
-    ['./pi-schedule-prompt.js', 'pi-schedule-prompt'],
-    ['./pi-loop-police.js', 'pi-loop-police'],
-  ];
+  var targets = [];
   for (var i = 0; i < targets.length; i++) {
     var fn = tryLoad(targets[i][0], targets[i][1]);
     if (fn) fn(pi);

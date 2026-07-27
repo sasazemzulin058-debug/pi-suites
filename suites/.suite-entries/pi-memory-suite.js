@@ -12,7 +12,6 @@ function tryLoad(rel, name) {
 module.exports = function piMemorySuite(pi) {
   var targets = [
     ['./pi-hermes-memory.js', 'pi-hermes-memory'],
-    ['./context-mode.js', 'context-mode'],
   ];
   for (var i = 0; i < targets.length; i++) {
     var fn = tryLoad(targets[i][0], targets[i][1]);
