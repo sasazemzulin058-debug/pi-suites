@@ -142,7 +142,9 @@ jobs:
           (cd vendor/pi-shazam && git apply ../../patches/pi-shazam.patch)
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
           for d in vendor/pi-lens vendor/pi-shazam vendor/readseek vendor/pi-hermes-memory vendor/pi-web-access; do
-            [ -d "$d" ] && (cd "$d" && npm install --ignore-scripts --legacy-peer-deps)
+            if [ -d "$d" ]; then
+              (cd "$d" && rm -f package-lock.json npm-shrinkwrap.json && npm install --ignore-scripts --legacy-peer-deps --no-package-lock)
+            fi
           done
           # context-mode is not bundled in this suite yet; its optional peer @earendil-works/pi-tui@0.70.0 was removed from npm.
       - name: Bundle suites
