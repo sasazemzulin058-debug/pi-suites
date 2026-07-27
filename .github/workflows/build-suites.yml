@@ -1,4 +1,4 @@
-name: Build & Release Pi Suites
+name: Build & Release Unified Pi Suites (Android ARM64)
 
 on:
   push:
@@ -9,27 +9,54 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout monorepo
         uses: actions/checkout@v4
+        with:
+          submodules: true
 
-      - name: Setup Node.js
+      - name: Setup Node.js & Rust
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Install dependencies & build suites
+      - name: Install dependencies & Build precompiled suites
         run: |
-          npm install -g esbuild
-          cd suites/pi-search-suite && npm install --package-lock=false || true
-          cd ../pi-memory-suite && npm install --package-lock=false || true
-          cd ../pi-execution-suite && npm install --package-lock=false || true
+          npm install -g esbuild tsup
+          mkdir -p dist
 
-      - name: Create Release Artifacts
+          # 1. Build pi-search-suite
+          cd suites/pi-search-suite
+          npm install --legacy-peer-deps || true
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+            --external:@ast-grep/napi \
+            --external:@ff-labs/fff-node \
+            --external:@earendil-works/* \
+            --external:tree-sitter* \
+            --external:node:* \
+            --external:better-sqlite3 \
+            --external:@sinclair/typebox
+
+          # 2. Build pi-memory-suite
+          cd ../pi-memory-suite
+          npm install --legacy-peer-deps || true
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+            --external:@earendil-works/* \
+            --external:node:* \
+            --external:better-sqlite3
+
+          # 3. Build pi-execution-suite
+          cd ../pi-execution-suite
+          npm install --legacy-peer-deps || true
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+            --external:@earendil-works/* \
+            --external:node:*
+
+      - name: Create Nightly Release
         uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: nightly
-          name: "Nightly Precompiled Suites"
+          name: "Nightly Precompiled Suites & Binaries"
           files: |
             suites/pi-search-suite/dist/index.js
             suites/pi-memory-suite/dist/index.js
