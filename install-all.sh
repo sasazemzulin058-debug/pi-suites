@@ -30,4 +30,11 @@ install -m 755 "$TMP_DIR/readseek" "$BIN_DIR/readseek"
 download_asset libfff_c.so "$TMP_DIR/libfff_c.so"
 install -m 755 "$TMP_DIR/libfff_c.so" "${PREFIX}/lib/libfff_c.so"
 
-echo "✅ Full Pi Suites & CLI binaries installed successfully!"
+mkdir -p "$AGENT_NPM"
+for pkg in pi-search-suite pi-memory-suite pi-execution-suite; do
+  echo "--> Installing $pkg..."
+  download_asset "$pkg-1.0.0.tgz" "$TMP_DIR/$pkg.tgz"
+  npm install --prefix "$AGENT_NPM" --no-package-lock --ignore-scripts "$TMP_DIR/$pkg.tgz" >/dev/null
+ done
+
+echo "✅ Pi suites, CLI binaries, and native library installed successfully!"

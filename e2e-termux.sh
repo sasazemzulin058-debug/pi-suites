@@ -16,9 +16,6 @@ file "$LIB"
 case "$(file -b "$LIB")" in *ARM*aarch64*|*ARM*64*) ;; *) echo 'libfff_c.so is not ARM64' >&2; exit 1 ;; esac
 
 for pkg in pi-search-suite pi-memory-suite pi-execution-suite; do
-  tgz="$NPM_ROOT/$pkg-1.0.0.tgz"
-  [ -f "$tgz" ] || { echo "missing $tgz" >&2; exit 1; }
-  npm install --global --prefix "$NPM_ROOT" "$tgz" >/dev/null
   node -e "const p=require('$pkg/package.json'); const f=require('$pkg/'+p.main); if(typeof f!=='function') throw Error('$pkg factory missing'); console.log('ok $pkg factory')"
 done
 
