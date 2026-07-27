@@ -150,11 +150,15 @@ jobs:
                   if (p[field]) for (const name of Object.keys(p[field])) if (name.startsWith("@earendil-works/")) delete p[field][name];
                 }
                 fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");
-              ' && npm install --ignore-scripts --legacy-peer-deps --no-package-lock && npm run build --if-present)
+              ' && npm install --ignore-scripts --legacy-peer-deps --no-package-lock && case "$d" in
+                vendor/pi-lens) npm run build:dist ;;
+                vendor/pi-shazam) npx tsc --noCheck ;;
+                vendor/pi-web-access) npm run build --if-present ;;
+              esac)
             fi
           done
           # readseek CLI is built by the separate Rust job; only its Pi package is installed here.
-          (cd vendor/readseek/packages/pi-readseek && npm install --ignore-scripts --legacy-peer-deps --no-package-lock && npm run build --if-present)
+          (cd vendor/readseek/packages/pi-readseek && npm install --ignore-scripts --legacy-peer-deps --no-package-lock)
       - name: Bundle suites
         shell: bash
         run: |
