@@ -15,35 +15,57 @@ jobs:
       - name: Checkout monorepo
         uses: actions/checkout@v4
 
-      - name: Checkout forked vendor sources
+      - name: Clone upstream sources
         run: |
           mkdir -p vendor
-          git clone --depth 1 https://github.com/sasazemzulin058-debug/ast-grep.git vendor/ast-grep
-          git clone --depth 1 https://github.com/sasazemzulin058-debug/readseek.git vendor/readseek
-          git clone --depth 1 https://github.com/sasazemzulin058-debug/fff.git vendor/fff
-          git clone --depth 1 https://github.com/sasazemzulin058-debug/pi-shazam.git vendor/pi-shazam
-          git clone --depth 1 https://github.com/sasazemzulin058-debug/pi-hermes-memory.git vendor/pi-hermes-memory
-          git clone --depth 1 https://github.com/sasazemzulin058-debug/context-mode.git vendor/context-mode
-          git clone --depth 1 https://github.com/sasazemzulin058-debug/pix-mono.git vendor/pix-mono
-          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git vendor/pi-web-access || true
+          # Search suite
+          git clone --depth 1 https://github.com/gjczone/pi-shazam.git           vendor/pi-shazam
+          git clone --depth 1 https://github.com/jarkkojs/readseek.git            vendor/readseek
+          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git     vendor/pi-web-access || true
+          # Memory suite
+          git clone --depth 1 https://github.com/weichenw/pi-hermes-memory.git   vendor/pi-hermes-memory
+          git clone --depth 1 https://github.com/mksglu/context-mode.git         vendor/context-mode
+          # Execution suite
           git clone --depth 1 https://github.com/quintinshaw/pi-dynamic-workflows.git vendor/pi-dynamic-workflows || true
-          git clone --depth 1 https://github.com/nicobailon/pi-subagents.git vendor/pi-subagents || true
-          git clone --depth 1 https://github.com/aliou/pi-processes.git vendor/pi-processes || true
+          git clone --depth 1 https://github.com/nicobailon/pi-subagents.git      vendor/pi-subagents || true
+          git clone --depth 1 https://github.com/aliou/pi-processes.git           vendor/pi-processes || true
           git clone --depth 1 https://github.com/tintinweb/pi-schedule-prompt.git vendor/pi-schedule-prompt || true
-          git clone --depth 1 https://github.com/sebaxzero/pi-loop-police.git vendor/pi-loop-police || true
+          git clone --depth 1 https://github.com/sebaxzero/pi-loop-police.git     vendor/pi-loop-police || true
+          # Shared: pix-mono + fff-node
+          git clone --depth 1 https://github.com/xynogen/pix-mono.git             vendor/pix-mono
+          git clone --depth 1 https://github.com/dmtrKovalenko/fff.nvim.git       vendor/fff
+
+      - name: Apply Android/Termux patches
+        run: |
+          cd vendor/pi-shazam       && git apply ../../patches/pi-shazam.patch       && cd ../..
+          cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch && cd ../..
+          cd vendor/context-mode    && git apply ../../patches/context-mode.patch     && cd ../..
+          cd vendor/pix-mono        && git apply ../../patches/pix-mono.patch         && cd ../..
+          cd vendor/fff             && git apply ../../patches/fff.patch              && cd ../..
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
 
-      - name: Install esbuild & Build Suites
+      - name: Install vendor npm deps
         run: |
-          npm install -g esbuild
+          cd vendor/pi-shazam && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
+          cd vendor/readseek  && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
+          cd vendor/pi-hermes-memory && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
+          cd vendor/context-mode     && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
+          cd vendor/pix-mono && npm install --ignore-scripts --legacy-peer-deps || true; cd ../..
 
-          # 1. Build pi-search-suite
+      - name: Install esbuild
+        run: npm install -g esbuild
+
+      - name: Build pi-search-suite
+        run: |
           cd suites/pi-search-suite
-          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/pi-search-suite.js \
+          cat src/index.ts
+          npx esbuild src/index.ts \
+            --bundle --platform=node --target=node24 --format=cjs \
+            --outfile=dist/pi-search-suite.js \
             --external:@ast-grep/napi \
             --external:@ff-labs/fff-node \
             --external:@earendil-works/* \
@@ -52,27 +74,30 @@ jobs:
             --external:better-sqlite3 \
             --external:@sinclair/typebox || true
 
-          # 2. Build pi-memory-suite
-          cd ../pi-memory-suite
-          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/pi-memory-suite.js \
+      - name: Build pi-memory-suite
+        run: |
+          cd suites/pi-memory-suite
+          npx esbuild src/index.ts \
+            --bundle --platform=node --target=node24 --format=cjs \
+            --outfile=dist/pi-memory-suite.js \
             --external:@earendil-works/* \
             --external:node:* \
             --external:better-sqlite3 || true
 
-          # 3. Build pi-execution-suite
-          cd ../pi-execution-suite
-          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/pi-execution-suite.js \
+      - name: Build pi-execution-suite
+        run: |
+          cd suites/pi-execution-suite
+          npx esbuild src/index.ts \
+            --bundle --platform=node --target=node24 --format=cjs \
+            --outfile=dist/pi-execution-suite.js \
             --external:@earendil-works/* \
             --external:node:* || true
 
-          cd ../..
-
       - name: Create Nightly Release
         uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
         with:
           tag_name: nightly
-          name: "Nightly Precompiled Suites & Packages"
+          name: "Nightly Precompiled Suites"
           files: |
             suites/pi-search-suite/dist/pi-search-suite.js
             suites/pi-memory-suite/dist/pi-memory-suite.js

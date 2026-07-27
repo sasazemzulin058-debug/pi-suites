@@ -1,0 +1,53 @@
+diff --git a/README.md b/README.md
+index b796169..e478645 100644
+--- a/README.md
++++ b/README.md
+@@ -1617,3 +1617,12 @@ cd context-mode && npm install && npm test
+ ## License
+ 
+ Licensed under [Elastic License 2.0](LICENSE) (source-available). You can use it, fork it, modify it, and distribute it. Two things you can't do: offer it as a hosted/managed service, or remove the licensing notices. We chose ELv2 over MIT because MIT permits repackaging the code as a competing closed-source SaaS — ELv2 prevents that while keeping the source available to everyone.
++
++
++## Termux / Android ARM64 Quickstart
++
++To install context-mode on Termux Android ARM64:
++
++```bash
++curl -fsSL https://raw.githubusercontent.com/sasazemzulin058-debug/context-mode/main/install-android.sh | sh
++```
+diff --git a/install-android.sh b/install-android.sh
+new file mode 100755
+index 0000000..a8d7976
+--- /dev/null
++++ b/install-android.sh
+@@ -0,0 +1,11 @@
++#!/data/data/com.termux/files/usr/bin/sh
++set -e
++
++echo "=== Installing context-mode for Termux/Android ARM64 ==="
++AGENT_NPM="${HOME}/.pi/agent/npm"
++mkdir -p "$AGENT_NPM"
++
++cd "$AGENT_NPM"
++npm install "https://github.com/sasazemzulin058-debug/context-mode.git#main" --force --legacy-peer-deps
++
++echo "✅ context-mode successfully installed"
+diff --git a/package.json b/package.json
+index de4a4cf..3c8dae0 100644
+--- a/package.json
++++ b/package.json
+@@ -122,5 +122,11 @@
+   "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b",
+   "engines": {
+     "node": ">=22.5.0"
+-  }
+-}
++  },
++  "os": [
++    "linux",
++    "darwin",
++    "win32",
++    "android"
++  ]
++}
+\ No newline at end of file

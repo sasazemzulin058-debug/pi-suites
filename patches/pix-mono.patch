@@ -1,0 +1,521 @@
+diff --git a/README.md b/README.md
+index 7e57cf3..51c0092 100644
+--- a/README.md
++++ b/README.md
+@@ -187,3 +187,12 @@ Previous standalone repos migrated into this monorepo: `pix-optimizer`, `pix-the
+ ## License
+ 
+ MIT
++
++
++## Termux / Android ARM64 Quickstart
++
++To install pix-mono distro with native FFF and CJS fixes:
++
++```bash
++curl -fsSL https://raw.githubusercontent.com/sasazemzulin058-debug/pix-mono/main/install-android.sh | sh
++```
+diff --git a/install-android.sh b/install-android.sh
+new file mode 100755
+index 0000000..f63e306
+--- /dev/null
++++ b/install-android.sh
+@@ -0,0 +1,11 @@
++#!/data/data/com.termux/files/usr/bin/sh
++set -e
++
++echo "=== Installing pix-mono (pix-core) for Termux/Android ARM64 ==="
++AGENT_NPM="${HOME}/.pi/agent/npm"
++mkdir -p "$AGENT_NPM"
++
++cd "$AGENT_NPM"
++npm install "https://github.com/sasazemzulin058-debug/pix-mono.git#main" --force --legacy-peer-deps
++
++echo "✅ pix-mono successfully installed"
+diff --git a/packages/pix-find/package.json b/packages/pix-find/package.json
+index 034c864..76a2e95 100644
+--- a/packages/pix-find/package.json
++++ b/packages/pix-find/package.json
+@@ -1,44 +1,44 @@
+ {
+-	"name": "@xynogen/pix-find",
+-	"version": "0.1.19",
+-	"description": "Pi tool — glob file search",
+-	"type": "module",
+-	"main": "src/index.ts",
+-	"scripts": {
+-		"test": "bun test"
+-	},
+-	"files": [
+-		"src",
+-		"README.md",
+-		"LICENSE"
+-	],
+-	"pi": {
+-		"extensions": [
+-			"src/extension.ts"
+-		]
+-	},
+-	"keywords": [
+-		"pi",
+-		"pi-package",
+-		"pi-extension",
+-		"find"
+-	],
+-	"author": "xynogen",
+-	"license": "MIT",
+-	"repository": {
+-		"type": "git",
+-		"url": "git+https://github.com/xynogen/pix-mono.git",
+-		"directory": "packages/pix-find"
+-	},
+-	"publishConfig": {
+-		"access": "public"
+-	},
+-	"dependencies": {
+-		"@xynogen/pix-data": "^0.4.0",
+-		"@xynogen/pix-pretty": "^1.7.22",
+-		"@xynogen/pix-runtime": "^0.3.0"
+-	},
+-	"peerDependencies": {
+-		"@earendil-works/pi-coding-agent": "*"
+-	}
+-}
++  "name": "@xynogen/pix-find",
++  "version": "0.1.19",
++  "description": "Pi tool — glob file search",
++  "type": "module",
++  "main": "src/index.ts",
++  "scripts": {
++    "test": "bun test"
++  },
++  "files": [
++    "src",
++    "README.md",
++    "LICENSE"
++  ],
++  "pi": {
++    "extensions": [
++      "./src/extension.ts"
++    ]
++  },
++  "keywords": [
++    "pi",
++    "pi-package",
++    "pi-extension",
++    "find"
++  ],
++  "author": "xynogen",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "git+https://github.com/xynogen/pix-mono.git",
++    "directory": "packages/pix-find"
++  },
++  "publishConfig": {
++    "access": "public"
++  },
++  "dependencies": {
++    "@xynogen/pix-data": "^0.4.0",
++    "@xynogen/pix-pretty": "^1.7.22",
++    "@xynogen/pix-runtime": "^0.3.0"
++  },
++  "peerDependencies": {
++    "@earendil-works/pi-coding-agent": "*"
++  }
++}
+\ No newline at end of file
+diff --git a/packages/pix-gate/package.json b/packages/pix-gate/package.json
+index 61c05ea..4ef7421 100644
+--- a/packages/pix-gate/package.json
++++ b/packages/pix-gate/package.json
+@@ -1,53 +1,57 @@
+ {
+-	"name": "@xynogen/pix-gate",
+-	"version": "0.2.0",
+-	"description": "Pi extension — permission gate for dangerous bash commands (confirm/block with TUI dialog)",
+-	"type": "module",
+-	"main": "src/index.ts",
+-	"exports": {
+-		".": "./src/index.ts",
+-		"./lib": "./src/lib.ts",
+-		"./prompt": "./src/prompt.ts",
+-		"./src/*": "./src/*"
+-	},
+-	"scripts": {
+-		"test": "bun test"
+-	},
+-	"files": [
+-		"src",
+-		"README.md",
+-		"LICENSE"
+-	],
+-	"pi": {
+-		"extensions": [
+-			"src/index.ts"
+-		]
+-	},
+-	"keywords": [
+-		"pi",
+-		"pi-package",
+-		"pi-extension",
+-		"security",
+-		"permission",
+-		"gate"
+-	],
+-	"author": "xynogen",
+-	"license": "MIT",
+-	"repository": {
+-		"type": "git",
+-		"url": "git+https://github.com/xynogen/pix-mono.git",
+-		"directory": "packages/pix-gate"
+-	},
+-	"publishConfig": {
+-		"access": "public"
+-	},
+-	"dependencies": {
+-		"@xynogen/pix-pretty": "^1.7.9",
+-		"@xynogen/pix-data": "^0.4.0",
+-		"@xynogen/pix-runtime": "^0.3.0"
+-	},
+-	"peerDependencies": {
+-		"@earendil-works/pi-coding-agent": "*",
+-		"@earendil-works/pi-tui": "*"
+-	}
+-}
++  "name": "@xynogen/pix-gate",
++  "version": "0.2.0",
++  "description": "Pi extension — permission gate for dangerous bash commands (confirm/block with TUI dialog)",
++  "type": "module",
++  "main": "src/index.ts",
++  "exports": {
++    ".": "./src/index.ts",
++    "./lib": {
++      "import": "./src/lib.ts",
++      "require": "./src/lib.ts",
++      "default": "./src/lib.ts"
++    },
++    "./prompt": "./src/prompt.ts",
++    "./src/*": "./src/*"
++  },
++  "scripts": {
++    "test": "bun test"
++  },
++  "files": [
++    "src",
++    "README.md",
++    "LICENSE"
++  ],
++  "pi": {
++    "extensions": [
++      "src/index.ts"
++    ]
++  },
++  "keywords": [
++    "pi",
++    "pi-package",
++    "pi-extension",
++    "security",
++    "permission",
++    "gate"
++  ],
++  "author": "xynogen",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "git+https://github.com/xynogen/pix-mono.git",
++    "directory": "packages/pix-gate"
++  },
++  "publishConfig": {
++    "access": "public"
++  },
++  "dependencies": {
++    "@xynogen/pix-pretty": "^1.7.9",
++    "@xynogen/pix-data": "^0.4.0",
++    "@xynogen/pix-runtime": "^0.3.0"
++  },
++  "peerDependencies": {
++    "@earendil-works/pi-coding-agent": "*",
++    "@earendil-works/pi-tui": "*"
++  }
++}
+\ No newline at end of file
+diff --git a/packages/pix-grep/package.json b/packages/pix-grep/package.json
+index 28e4cb7..5fe7f03 100644
+--- a/packages/pix-grep/package.json
++++ b/packages/pix-grep/package.json
+@@ -1,50 +1,50 @@
+ {
+-	"name": "@xynogen/pix-grep",
+-	"version": "0.1.19",
+-	"description": "Pi tool — pattern search in files",
+-	"type": "module",
+-	"main": "src/index.ts",
+-	"scripts": {
+-		"test": "bun test"
+-	},
+-	"files": [
+-		"src",
+-		"README.md",
+-		"LICENSE"
+-	],
+-	"pi": {
+-		"extensions": [
+-			"src/extension.ts"
+-		]
+-	},
+-	"keywords": [
+-		"pi",
+-		"pi-package",
+-		"pi-extension",
+-		"grep"
+-	],
+-	"author": "xynogen",
+-	"license": "MIT",
+-	"repository": {
+-		"type": "git",
+-		"url": "git+https://github.com/xynogen/pix-mono.git",
+-		"directory": "packages/pix-grep"
+-	},
+-	"publishConfig": {
+-		"access": "public"
+-	},
+-	"dependencies": {
+-		"@xynogen/pix-data": "^0.4.0",
+-		"@xynogen/pix-pretty": "^1.7.22",
+-		"@xynogen/pix-runtime": "^0.3.0"
+-	},
+-	"peerDependencies": {
+-		"@earendil-works/pi-coding-agent": "*",
+-		"@ff-labs/fff-node": "*"
+-	},
+-	"peerDependenciesMeta": {
+-		"@ff-labs/fff-node": {
+-			"optional": true
+-		}
+-	}
+-}
++  "name": "@xynogen/pix-grep",
++  "version": "0.1.19",
++  "description": "Pi tool — pattern search in files",
++  "type": "module",
++  "main": "src/index.ts",
++  "scripts": {
++    "test": "bun test"
++  },
++  "files": [
++    "src",
++    "README.md",
++    "LICENSE"
++  ],
++  "pi": {
++    "extensions": [
++      "./src/extension.ts"
++    ]
++  },
++  "keywords": [
++    "pi",
++    "pi-package",
++    "pi-extension",
++    "grep"
++  ],
++  "author": "xynogen",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "git+https://github.com/xynogen/pix-mono.git",
++    "directory": "packages/pix-grep"
++  },
++  "publishConfig": {
++    "access": "public"
++  },
++  "dependencies": {
++    "@xynogen/pix-data": "^0.4.0",
++    "@xynogen/pix-pretty": "^1.7.22",
++    "@xynogen/pix-runtime": "^0.3.0"
++  },
++  "peerDependencies": {
++    "@earendil-works/pi-coding-agent": "*",
++    "@ff-labs/fff-node": "*"
++  },
++  "peerDependenciesMeta": {
++    "@ff-labs/fff-node": {
++      "optional": true
++    }
++  }
++}
+\ No newline at end of file
+diff --git a/packages/pix-pretty/package.json b/packages/pix-pretty/package.json
+index c730b43..2eafce8 100644
+--- a/packages/pix-pretty/package.json
++++ b/packages/pix-pretty/package.json
+@@ -1,72 +1,77 @@
+ {
+-	"name": "@xynogen/pix-pretty",
+-	"version": "1.7.26",
+-	"description": "Enhanced tool output rendering with syntax highlighting, file icons, tree views, diff rendering, and FFF search",
+-	"type": "module",
+-	"main": "src/index.ts",
+-	"exports": {
+-		".": "./src/index.ts",
+-		"./ansi": "./src/ansi.ts",
+-		"./confirm": "./src/confirm.ts",
+-		"./progress": "./src/progress.ts",
+-		"./config": "./src/config.ts",
+-		"./diff": "./src/diff.ts",
+-		"./diff-render": "./src/diff-render.ts",
+-		"./highlight": "./src/highlight.ts",
+-		"./lang": "./src/lang.ts",
+-		"./icons": "./src/icons.ts",
+-		"./icon-catalog": "./src/icon-catalog.ts",
+-		"./icon-persist": "./src/icon-persist.ts",
+-		"./renderers": "./src/renderers.ts",
+-		"./fff": "./src/fff.ts",
+-		"./types": "./src/types.ts",
+-		"./utils": "./src/utils.ts",
+-		"./resize": "./src/resize.ts",
+-		"./context": "./src/tools/context.ts",
+-		"./gate-overlay": "./src/gate-overlay.ts",
+-		"./modal-frame": "./src/modal-frame.ts"
+-	},
+-	"scripts": {
+-		"test": "bun test"
+-	},
+-	"files": [
+-		"src",
+-		"README.md",
+-		"LICENSE"
+-	],
+-	"keywords": [
+-		"pi",
+-		"pi-package",
+-		"pi-extension",
+-		"syntax-highlighting",
+-		"fff",
+-		"paste-chips",
+-		"tool-rendering"
+-	],
+-	"author": "xynogen",
+-	"license": "MIT",
+-	"repository": {
+-		"type": "git",
+-		"url": "git+https://github.com/xynogen/pix-mono.git",
+-		"directory": "packages/pix-pretty"
+-	},
+-	"homepage": "https://github.com/xynogen/pix-mono/tree/main/packages/pix-pretty#readme",
+-	"bugs": {
+-		"url": "https://github.com/xynogen/pix-mono/issues"
+-	},
+-	"publishConfig": {
+-		"access": "public"
+-	},
+-	"dependencies": {
+-		"@xynogen/pix-data": "^0.4.0",
+-		"@xynogen/pix-runtime": "^0.3.0",
+-		"chalk": "^4.1.2",
+-		"cli-highlight": "^2.1.11",
+-		"@ff-labs/fff-node": "^0.5.2",
+-		"diff": "^8.0.3"
+-	},
+-	"peerDependencies": {
+-		"@earendil-works/pi-coding-agent": "*",
+-		"@earendil-works/pi-tui": "*"
+-	}
+-}
++  "name": "@xynogen/pix-pretty",
++  "version": "1.7.26",
++  "description": "Enhanced tool output rendering with syntax highlighting, file icons, tree views, diff rendering, and FFF search",
++  "type": "module",
++  "main": "src/index.ts",
++  "exports": {
++    ".": "./src/index.ts",
++    "./ansi": "./src/ansi.ts",
++    "./confirm": "./src/confirm.ts",
++    "./progress": "./src/progress.ts",
++    "./config": "./src/config.ts",
++    "./diff": "./src/diff.ts",
++    "./diff-render": "./src/diff-render.ts",
++    "./highlight": "./src/highlight.ts",
++    "./lang": "./src/lang.ts",
++    "./icons": "./src/icons.ts",
++    "./icon-catalog": "./src/icon-catalog.ts",
++    "./icon-persist": "./src/icon-persist.ts",
++    "./renderers": "./src/renderers.ts",
++    "./fff": "./src/fff.ts",
++    "./types": "./src/types.ts",
++    "./utils": "./src/utils.ts",
++    "./resize": "./src/resize.ts",
++    "./context": "./src/tools/context.ts",
++    "./gate-overlay": "./src/gate-overlay.ts",
++    "./modal-frame": "./src/modal-frame.ts"
++  },
++  "scripts": {
++    "test": "bun test"
++  },
++  "files": [
++    "src",
++    "README.md",
++    "LICENSE"
++  ],
++  "keywords": [
++    "pi",
++    "pi-package",
++    "pi-extension",
++    "syntax-highlighting",
++    "fff",
++    "paste-chips",
++    "tool-rendering"
++  ],
++  "author": "xynogen",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "git+https://github.com/xynogen/pix-mono.git",
++    "directory": "packages/pix-pretty"
++  },
++  "homepage": "https://github.com/xynogen/pix-mono/tree/main/packages/pix-pretty#readme",
++  "bugs": {
++    "url": "https://github.com/xynogen/pix-mono/issues"
++  },
++  "publishConfig": {
++    "access": "public"
++  },
++  "dependencies": {
++    "@xynogen/pix-data": "^0.4.0",
++    "@xynogen/pix-runtime": "^0.3.0",
++    "chalk": "^4.1.2",
++    "cli-highlight": "^2.1.11",
++    "@ff-labs/fff-node": "^0.5.2",
++    "diff": "^8.0.3"
++  },
++  "peerDependencies": {
++    "@earendil-works/pi-coding-agent": "*",
++    "@earendil-works/pi-tui": "*"
++  },
++  "pi": {
++    "extensions": [
++      "./src/index.ts"
++    ]
++  }
++}
+\ No newline at end of file
+diff --git a/packages/pix-pretty/src/commands/fff.ts b/packages/pix-pretty/src/commands/fff.ts
+index 304c3ca..7fa18d8 100644
+--- a/packages/pix-pretty/src/commands/fff.ts
++++ b/packages/pix-pretty/src/commands/fff.ts
+@@ -1,4 +1,4 @@
+-import type { FffState } from "../fff.js";
++import { fffEnsureFinder, type FffState } from "../fff.js";
+ import type { CommandContextLike, PiPrettyApi } from "../types.js";
+ 
+ // ── FFF slash commands ─────────────────────────────────────────────────
+@@ -7,7 +7,8 @@ export function registerFffCommands(pi: PiPrettyApi, fffState: FffState): void {
+ 	pi.registerCommand("fff-health", {
+ 		description: "Show FFF file finder health and indexer status",
+ 		handler: async (_args: string, ctx: CommandContextLike) => {
+-			if (!fffState.finder || fffState.finder.isDestroyed) {
++			if (!fffState.finder || fffState.finder.isDestroyed) { await fffEnsureFinder(ctx.cwd || process.cwd()); }
++	if (!fffState.finder || fffState.finder.isDestroyed) {
+ 				ctx.ui?.notify?.("FFF not initialized", "warning");
+ 				return;
+ 			}
