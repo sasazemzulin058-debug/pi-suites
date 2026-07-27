@@ -143,7 +143,14 @@ jobs:
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
           for d in vendor/pi-lens vendor/pi-shazam vendor/pi-hermes-memory vendor/pi-web-access; do
             if [ -d "$d" ]; then
-              (cd "$d" && rm -f package-lock.json npm-shrinkwrap.json && npm install --ignore-scripts --legacy-peer-deps --no-package-lock)
+              (cd "$d" && rm -f package-lock.json npm-shrinkwrap.json && node -e '
+                const fs = require("fs");
+                const p = JSON.parse(fs.readFileSync("package.json", "utf8"));
+                for (const field of ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"]) {
+                  if (p[field]) for (const name of Object.keys(p[field])) if (name.startsWith("@earendil-works/")) delete p[field][name];
+                }
+                fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\\n");
+              ' && npm install --ignore-scripts --legacy-peer-deps --no-package-lock)
             fi
           done
           # readseek CLI is built by the separate Rust job; only its Pi package is installed here.
