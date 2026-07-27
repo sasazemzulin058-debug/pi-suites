@@ -196,7 +196,7 @@ jobs:
               --external:@mozilla/readability --external:linkedom \
               --external:turndown --external:p-limit --external:promise.try
 
-          cp suites/.suite-entries/pi-search-suite.js suites/pi-search-suite/dist/
+          cp suites/.suite-entries/pi-search-suite.js suites/pi-search-suite/dist/index.js
 
       - name: Build pi-memory-suite
         run: |
@@ -222,7 +222,7 @@ jobs:
           done
           [ -d vendor/context-mode/hooks ] && cp -r vendor/context-mode/hooks suites/pi-memory-suite/dist/context-mode-cli/ || true
 
-          cp suites/.suite-entries/pi-memory-suite.js suites/pi-memory-suite/dist/
+          cp suites/.suite-entries/pi-memory-suite.js suites/pi-memory-suite/dist/index.js
 
       - name: Build pi-execution-suite
         run: |
@@ -244,7 +244,7 @@ jobs:
           bundle_vendor pi-schedule-prompt   vendor/pi-schedule-prompt
           bundle_vendor pi-loop-police       vendor/pi-loop-police
 
-          cp suites/.suite-entries/pi-execution-suite.js suites/pi-execution-suite/dist/
+          cp suites/.suite-entries/pi-execution-suite.js suites/pi-execution-suite/dist/index.js
 
       - name: Verify artifacts
         run: |
