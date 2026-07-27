@@ -144,6 +144,16 @@ jobs:
       - name: Package readseek-android-arm64 npm wrapper
         run: |
           mkdir -p artifacts/npm/readseek-android-arm64/bin
+          cat > artifacts/npm/readseek-android-arm64/package.json <<'PKGJSON'
+          {
+            "name": "@sasazemzulin058-debug/readseek-android-arm64",
+            "version": "0.8.11-android.1",
+            "description": "readseek CLI binary for Android ARM64 (Termux)",
+            "os": ["android", "linux"],
+            "cpu": ["arm64"],
+            "files": ["bin"]
+          }
+          PKGJSON
           cp artifacts/cli/readseek-android-arm64 artifacts/npm/readseek-android-arm64/bin/readseek
           chmod 755 artifacts/npm/readseek-android-arm64/bin/readseek
           (cd artifacts/npm/readseek-android-arm64 && npm pack --pack-destination ../../../artifacts)
