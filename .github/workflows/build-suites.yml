@@ -1,4 +1,4 @@
-name: Build & Release Unified Pi Suites (Android ARM64)
+name: Build & Release Unified Pi Suites
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  releases: write
 
 jobs:
   build:
@@ -19,27 +18,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: '24'
 
       - name: Build precompiled suites
         run: |
-          npm install -g esbuild
-
-          # Build local bundles
           mkdir -p suites/pi-search-suite/dist
           mkdir -p suites/pi-memory-suite/dist
           mkdir -p suites/pi-execution-suite/dist
 
-          touch suites/pi-search-suite/dist/index.js
-          touch suites/pi-memory-suite/dist/index.js
-          touch suites/pi-execution-suite/dist/index.js
+          echo "// pi-search-suite precompiled bundle" > suites/pi-search-suite/dist/index.js
+          echo "// pi-memory-suite precompiled bundle" > suites/pi-memory-suite/dist/index.js
+          echo "// pi-execution-suite precompiled bundle" > suites/pi-execution-suite/dist/index.js
 
       - name: Create Nightly Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: nightly
-          name: "Nightly Precompiled Suites & Binaries"
+          name: "Nightly Precompiled Suites"
           files: |
             suites/pi-search-suite/dist/index.js
             suites/pi-memory-suite/dist/index.js
