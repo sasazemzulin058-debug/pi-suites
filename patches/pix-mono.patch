@@ -1,3 +1,37 @@
+diff --git a/README.md b/README.md
+index 7e57cf3..51c0092 100644
+--- a/README.md
++++ b/README.md
+@@ -187,3 +187,12 @@ Previous standalone repos migrated into this monorepo: `pix-optimizer`, `pix-the
+ ## License
+ 
+ MIT
++
++
++## Termux / Android ARM64 Quickstart
++
++To install pix-mono distro with native FFF and CJS fixes:
++
++```bash
++curl -fsSL https://raw.githubusercontent.com/sasazemzulin058-debug/pix-mono/main/install-android.sh | sh
++```
+diff --git a/install-android.sh b/install-android.sh
+new file mode 100755
+index 0000000..f63e306
+--- /dev/null
++++ b/install-android.sh
+@@ -0,0 +1,11 @@
++#!/data/data/com.termux/files/usr/bin/sh
++set -e
++
++echo "=== Installing pix-mono (pix-core) for Termux/Android ARM64 ==="
++AGENT_NPM="${HOME}/.pi/agent/npm"
++mkdir -p "$AGENT_NPM"
++
++cd "$AGENT_NPM"
++npm install "https://github.com/sasazemzulin058-debug/pix-mono.git#main" --force --legacy-peer-deps
++
++echo "✅ pix-mono successfully installed"
 diff --git a/packages/pix-find/package.json b/packages/pix-find/package.json
 index 034c864..76a2e95 100644
 --- a/packages/pix-find/package.json
