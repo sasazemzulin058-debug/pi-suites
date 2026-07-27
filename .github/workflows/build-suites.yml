@@ -1,4 +1,4 @@
-name: Build & Release Unified Pi Suites
+name: Build & Release Unified Pi Suites (Android ARM64)
 
 on:
   push:
@@ -15,27 +15,64 @@ jobs:
       - name: Checkout monorepo
         uses: actions/checkout@v4
 
+      - name: Checkout forked vendor sources
+        run: |
+          mkdir -p vendor
+          git clone --depth 1 https://github.com/sasazemzulin058-debug/ast-grep.git vendor/ast-grep
+          git clone --depth 1 https://github.com/sasazemzulin058-debug/readseek.git vendor/readseek
+          git clone --depth 1 https://github.com/sasazemzulin058-debug/fff.git vendor/fff
+          git clone --depth 1 https://github.com/sasazemzulin058-debug/pi-shazam.git vendor/pi-shazam
+          git clone --depth 1 https://github.com/sasazemzulin058-debug/pi-hermes-memory.git vendor/pi-hermes-memory
+          git clone --depth 1 https://github.com/sasazemzulin058-debug/context-mode.git vendor/context-mode
+          git clone --depth 1 https://github.com/sasazemzulin058-debug/pix-mono.git vendor/pix-mono
+          git clone --depth 1 https://github.com/nicobailon/pi-web-access.git vendor/pi-web-access
+          git clone --depth 1 https://github.com/quintinshaw/pi-dynamic-workflows.git vendor/pi-dynamic-workflows
+          git clone --depth 1 https://github.com/badlogic/pi-subagents.git vendor/pi-subagents
+          git clone --depth 1 https://github.com/aliou/pi-processes.git vendor/pi-processes
+          git clone --depth 1 https://github.com/aliou/pi-schedule-prompt.git vendor/pi-schedule-prompt
+          git clone --depth 1 https://github.com/aliou/pi-loop-police.git vendor/pi-loop-police
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
 
-      - name: Build precompiled suites
+      - name: Install esbuild & Build Suites
         run: |
-          mkdir -p suites/pi-search-suite/dist
-          mkdir -p suites/pi-memory-suite/dist
-          mkdir -p suites/pi-execution-suite/dist
+          npm install -g esbuild
 
-          echo "// pi-search-suite precompiled bundle" > suites/pi-search-suite/dist/index.js
-          echo "// pi-memory-suite precompiled bundle" > suites/pi-memory-suite/dist/index.js
-          echo "// pi-execution-suite precompiled bundle" > suites/pi-execution-suite/dist/index.js
+          # 1. Build pi-search-suite
+          cd suites/pi-search-suite
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+            --external:@ast-grep/napi \
+            --external:@ff-labs/fff-node \
+            --external:@earendil-works/* \
+            --external:tree-sitter* \
+            --external:node:* \
+            --external:better-sqlite3 \
+            --external:@sinclair/typebox || true
+
+          # 2. Build pi-memory-suite
+          cd ../pi-memory-suite
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+            --external:@earendil-works/* \
+            --external:node:* \
+            --external:better-sqlite3 || true
+
+          # 3. Build pi-execution-suite
+          cd ../pi-execution-suite
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+            --external:@earendil-works/* \
+            --external:node:* || true
+
+          cd ../..
 
       - name: Create Nightly Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: nightly
-          name: "Nightly Precompiled Suites"
+          name: "Nightly Precompiled Suites & Packages"
           files: |
             suites/pi-search-suite/dist/index.js
             suites/pi-memory-suite/dist/index.js
