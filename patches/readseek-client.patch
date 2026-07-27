@@ -1,0 +1,46 @@
+--- /data/data/com.termux/files/home/tmp-patch-gen/readseek-upstream/packages/pi-readseek/src/readseek-client.ts	2026-07-27 13:19:47.684019384 +0500
++++ /data/data/com.termux/files/home/tmp-patch-gen/readseek-fork/packages/pi-readseek/src/readseek-client.ts	2026-07-27 13:19:48.268019384 +0500
+@@ -254,6 +254,7 @@
+ }
+ 
+ const READSEEK_PLATFORM_PACKAGES: Record<string, string> = {
++	"android-arm64": "@sasazemzulin058-debug/readseek-android-arm64",
+ 	"darwin-arm64": "@jarkkojs/readseek-darwin-arm64",
+ 	"linux-arm64": "@jarkkojs/readseek-linux-arm64",
+ 	"linux-x64": "@jarkkojs/readseek-linux-x64",
+--- /data/data/com.termux/files/home/tmp-patch-gen/readseek-upstream/packages/pi-readseek/package.json	2026-07-27 13:19:47.676019384 +0500
++++ /data/data/com.termux/files/home/tmp-patch-gen/readseek-fork/packages/pi-readseek/package.json	2026-07-27 13:19:48.264019384 +0500
+@@ -4,7 +4,7 @@
+   "description": "Pi extension for readseek-backed hash-anchored read/edit/grep, structural code maps, structural search, and file exploration",
+   "type": "module",
+   "exports": {
+-    ".": "./dist/index.ts"
++    ".": "./dist/index.js"
+   },
+   "keywords": [
+     "pi-package",
+@@ -21,7 +21,7 @@
+   "license": "Apache-2.0",
+   "pi": {
+     "extensions": [
+-      "./dist/index.ts"
++      "./dist/index.js"
+     ]
+   },
+   "files": [
+@@ -31,7 +31,7 @@
+     "README.md"
+   ],
+   "scripts": {
+-    "build": "bun build index.ts --outfile dist/index.ts --target=node --packages=external",
++    "build": "bun build index.ts --outfile dist/index.js --target=node --packages=external",
+     "prepack": "npm run build",
+     "test": "npm run build && node scripts/vitest-run.mjs",
+     "typecheck": "tsc --noEmit"
+@@ -66,4 +66,4 @@
+     "url": "https://github.com/jarkkojs/readseek/issues"
+   },
+   "homepage": "https://github.com/jarkkojs/readseek/tree/main/packages/pi-readseek#readme"
+-}
++}
+\ No newline at end of file
