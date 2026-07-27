@@ -43,7 +43,7 @@ jobs:
 
           # 1. Build pi-search-suite
           cd suites/pi-search-suite
-          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/pi-search-suite.js \
             --external:@ast-grep/napi \
             --external:@ff-labs/fff-node \
             --external:@earendil-works/* \
@@ -54,14 +54,14 @@ jobs:
 
           # 2. Build pi-memory-suite
           cd ../pi-memory-suite
-          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/pi-memory-suite.js \
             --external:@earendil-works/* \
             --external:node:* \
             --external:better-sqlite3 || true
 
           # 3. Build pi-execution-suite
           cd ../pi-execution-suite
-          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js \
+          npx esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/pi-execution-suite.js \
             --external:@earendil-works/* \
             --external:node:* || true
 
@@ -74,8 +74,8 @@ jobs:
           tag_name: nightly
           name: "Nightly Precompiled Suites & Packages"
           files: |
-            suites/pi-search-suite/dist/index.js
-            suites/pi-memory-suite/dist/index.js
-            suites/pi-execution-suite/dist/index.js
+            suites/pi-search-suite/dist/pi-search-suite.js
+            suites/pi-memory-suite/dist/pi-memory-suite.js
+            suites/pi-execution-suite/dist/pi-execution-suite.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
