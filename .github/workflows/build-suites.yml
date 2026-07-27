@@ -138,12 +138,13 @@ jobs:
           git clone --depth 1 https://github.com/gjczone/pi-shazam.git vendor/pi-shazam
           git clone --depth 1 https://github.com/jarkkojs/readseek.git vendor/readseek
           git clone --depth 1 https://github.com/weichenw/pi-hermes-memory.git vendor/pi-hermes-memory
-          git clone --depth 1 https://github.com/mksglu/context-mode.git vendor/context-mode
           git clone --depth 1 https://github.com/nicobailon/pi-web-access.git vendor/pi-web-access || true
           (cd vendor/pi-shazam && git apply ../../patches/pi-shazam.patch)
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
-          (cd vendor/context-mode && git apply ../../patches/context-mode.patch)
-          for d in vendor/pi-lens vendor/pi-shazam vendor/readseek vendor/pi-hermes-memory vendor/context-mode vendor/pi-web-access; do [ -d "$d" ] && (cd "$d" && npm install --ignore-scripts --legacy-peer-deps); done
+          for d in vendor/pi-lens vendor/pi-shazam vendor/readseek vendor/pi-hermes-memory vendor/pi-web-access; do
+            [ -d "$d" ] && (cd "$d" && npm install --ignore-scripts --legacy-peer-deps)
+          done
+          # context-mode is not bundled in this suite yet; its optional peer @earendil-works/pi-tui@0.70.0 was removed from npm.
       - name: Bundle suites
         shell: bash
         run: |
