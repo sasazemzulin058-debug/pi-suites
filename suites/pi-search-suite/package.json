@@ -7,12 +7,5 @@
     "extensions": [
       "./dist/index.js"
     ]
-  },
-  "dependencies": {
-    "pi-lens": "file:../../../../.pi/agent/npm/node_modules/pi-lens",
-    "pi-readseek": "file:../../../../.pi/agent/npm/node_modules/pi-readseek",
-    "pi-shazam": "file:../../../../.pi/agent/npm/node_modules/pi-shazam",
-    "pi-web-access": "file:../../../../.pi/agent/npm/node_modules/pi-web-access",
-    "@ff-labs/fff-node": "file:../../../../.pi/agent/npm/node_modules/@ff-labs/fff-node"
   }
 }

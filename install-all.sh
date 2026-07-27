@@ -10,28 +10,24 @@ AGENT_NPM="${HOME}/.pi/agent/npm"
 BIN_DIR="${PREFIX}/bin"
 
 # 1. Install Native CLI Binaries
+RELEASE_URL="https://github.com/sasazemulin058-debug/pi-suites/releases/download/nightly"
+
+download_asset() {
+  asset="$1"
+  out="$2"
+  curl -fL --retry 3 --connect-timeout 10 "$RELEASE_URL/$asset" -o "$out"
+}
+
 echo "--> Installing ast-grep CLI binary..."
-curl -L --retry 3 --connect-timeout 10 -o "$TMP_DIR/ast-grep" "https://github.com/sasazemzulin058-debug/ast-grep/releases/download/v0.45.0-android.1/ast-grep"
-if [ -f "$TMP_DIR/ast-grep" ]; then
-  rm -f "$BIN_DIR/ast-grep" 2>/dev/null || true
-  cp "$TMP_DIR/ast-grep" "$BIN_DIR/ast-grep"
-  chmod 755 "$BIN_DIR/ast-grep"
-fi
+download_asset ast-grep-android-arm64 "$TMP_DIR/ast-grep"
+install -m 755 "$TMP_DIR/ast-grep" "$BIN_DIR/ast-grep"
 
-echo "--> Installing readseek CLI binary..."
-curl -L --retry 3 --connect-timeout 10 -o "$TMP_DIR/readseek" "https://github.com/sasazemzulin058-debug/readseek/releases/download/v0.8.11-android.1/readseek"
-if [ -f "$TMP_DIR/readseek" ]; then
-  rm -f "$BIN_DIR/readseek" 2>/dev/null || true
-  cp "$TMP_DIR/readseek" "$BIN_DIR/readseek"
-  chmod 755 "$BIN_DIR/readseek"
-fi
+ echo "--> Installing readseek CLI binary..."
+download_asset readseek-android-arm64 "$TMP_DIR/readseek"
+install -m 755 "$TMP_DIR/readseek" "$BIN_DIR/readseek"
 
-echo "--> Installing libfff_c.so native library..."
-curl -L --retry 3 --connect-timeout 10 -o "$TMP_DIR/libfff_c.so" "https://github.com/sasazemzulin058-debug/fff/releases/download/nightly/c-lib-aarch64-linux-android.so"
-if [ -f "$TMP_DIR/libfff_c.so" ]; then
-  rm -f "${PREFIX}/lib/libfff_c.so" 2>/dev/null || true
-  cp "$TMP_DIR/libfff_c.so" "${PREFIX}/lib/libfff_c.so"
-  chmod 755 "${PREFIX}/lib/libfff_c.so"
-fi
+ echo "--> Installing libfff_c.so native library..."
+download_asset libfff_c.so "$TMP_DIR/libfff_c.so"
+install -m 755 "$TMP_DIR/libfff_c.so" "${PREFIX}/lib/libfff_c.so"
 
 echo "✅ Full Pi Suites & CLI binaries installed successfully!"
