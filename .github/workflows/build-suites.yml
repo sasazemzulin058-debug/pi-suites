@@ -149,7 +149,7 @@ jobs:
                 for (const field of ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"]) {
                   if (p[field]) for (const name of Object.keys(p[field])) if (name.startsWith("@earendil-works/")) delete p[field][name];
                 }
-                fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\\n");
+                fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");
               ' && npm install --ignore-scripts --legacy-peer-deps --no-package-lock)
             fi
           done
