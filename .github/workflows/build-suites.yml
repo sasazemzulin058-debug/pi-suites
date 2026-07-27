@@ -39,6 +39,8 @@ jobs:
           cd vendor-ast-grep
           if [ '${{ matrix.name }}' = android-arm64 ]; then
             export NDK="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            export PATH="$NDK:$PATH"
+            ln -sf "$NDK/aarch64-linux-android24-clang" "$NDK/aarch64-linux-android-clang"
             mkdir -p .cargo
             printf '[target.aarch64-linux-android]\nlinker = "%s/%s"\nar = "%s/llvm-ar"\n' "$NDK" '${{ matrix.linker }}' "$NDK" > .cargo/config.toml
           fi
@@ -79,6 +81,8 @@ jobs:
           git apply ../patches/readseek-client.patch
           if [ '${{ matrix.name }}' = android-arm64 ]; then
             export NDK="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            export PATH="$NDK:$PATH"
+            ln -sf "$NDK/aarch64-linux-android24-clang" "$NDK/aarch64-linux-android-clang"
             mkdir -p .cargo
             printf '[target.aarch64-linux-android]\nlinker = "%s/aarch64-linux-android24-clang"\nar = "%s/llvm-ar"\n' "$NDK" "$NDK" > .cargo/config.toml
           fi
@@ -108,6 +112,8 @@ jobs:
           cd vendor-fff
           git apply ../patches/fff.patch
           export NDK="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          export PATH="$NDK:$PATH"
+          ln -sf "$NDK/aarch64-linux-android24-clang" "$NDK/aarch64-linux-android-clang"
           mkdir -p .cargo
           printf '[target.aarch64-linux-android]\nlinker = "%s/aarch64-linux-android24-clang"\nar = "%s/llvm-ar"\n' "$NDK" "$NDK" > .cargo/config.toml
           cargo build --release -p fff-c --target aarch64-linux-android
