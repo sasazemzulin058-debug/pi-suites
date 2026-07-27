@@ -1,0 +1,38 @@
+name: Build & Release Pi Suites
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies & build suites
+        run: |
+          npm install -g esbuild
+          cd suites/pi-search-suite && npm install --package-lock=false || true
+          cd ../pi-memory-suite && npm install --package-lock=false || true
+          cd ../pi-execution-suite && npm install --package-lock=false || true
+
+      - name: Create Release Artifacts
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: nightly
+          name: "Nightly Precompiled Suites"
+          files: |
+            suites/pi-search-suite/dist/index.js
+            suites/pi-memory-suite/dist/index.js
+            suites/pi-execution-suite/dist/index.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
