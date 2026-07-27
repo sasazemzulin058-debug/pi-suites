@@ -25,9 +25,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          target: ${{ matrix.target }}
+      - name: Setup Rust
+        run: rustup target add ${{ matrix.target }}
       - if: matrix.name == 'android-arm64'
         uses: nttld/setup-ndk@v1
         with:
@@ -45,12 +44,12 @@ jobs:
             printf '[target.aarch64-linux-android]\nlinker = "%s/%s"\nar = "%s/llvm-ar"\n' "$NDK" '${{ matrix.linker }}' "$NDK" > .cargo/config.toml
           fi
           cargo build --release --bin ast-grep --target '${{ matrix.target }}'
-          mkdir -p ../out
-          cp target/'${{ matrix.target }}'/release/ast-grep ../out/ast-grep-${{ matrix.name }}
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp target/'${{ matrix.target }}'/release/ast-grep "$GITHUB_WORKSPACE/out/ast-grep-${{ matrix.name }}"
       - uses: actions/upload-artifact@v4
         with:
           name: cli-ast-grep-${{ matrix.name }}
-          path: vendor-ast-grep/../out/ast-grep-${{ matrix.name }}
+          path: vendor-ast-grep/"$GITHUB_WORKSPACE/out/ast-grep-${{ matrix.name }}"
 
   readseek:
     strategy:
@@ -65,9 +64,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          target: ${{ matrix.target }}
+      - name: Setup Rust
+        run: rustup target add ${{ matrix.target }}
       - if: matrix.name == 'android-arm64'
         uses: nttld/setup-ndk@v1
         with:
@@ -87,21 +85,20 @@ jobs:
             printf '[target.aarch64-linux-android]\nlinker = "%s/aarch64-linux-android24-clang"\nar = "%s/llvm-ar"\n' "$NDK" "$NDK" > .cargo/config.toml
           fi
           cargo build --release --bin readseek --target '${{ matrix.target }}'
-          mkdir -p ../out
-          cp target/'${{ matrix.target }}'/release/readseek ../out/readseek-${{ matrix.name }}
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp target/'${{ matrix.target }}'/release/readseek "$GITHUB_WORKSPACE/out/readseek-${{ matrix.name }}"
       - uses: actions/upload-artifact@v4
         with:
           name: cli-readseek-${{ matrix.name }}
-          path: vendor-readseek/../out/readseek-${{ matrix.name }}
+          path: vendor-readseek/"$GITHUB_WORKSPACE/out/readseek-${{ matrix.name }}"
 
   fff:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          target: aarch64-linux-android
+      - name: Setup Rust
+        run: rustup target add aarch64-linux-android
       - uses: nttld/setup-ndk@v1
         with:
           ndk-version: ${{ env.ANDROID_NDK_VERSION }}
@@ -117,12 +114,12 @@ jobs:
           mkdir -p .cargo
           printf '[target.aarch64-linux-android]\nlinker = "%s/aarch64-linux-android24-clang"\nar = "%s/llvm-ar"\n' "$NDK" "$NDK" > .cargo/config.toml
           cargo build --release -p fff-c --target aarch64-linux-android
-          mkdir -p ../out
-          cp target/aarch64-linux-android/release/libfff_c.so ../out/libfff_c.so
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp target/aarch64-linux-android/release/libfff_c.so "$GITHUB_WORKSPACE/out/libfff_c.so"
       - uses: actions/upload-artifact@v4
         with:
           name: native-fff-android
-          path: vendor-fff/../out/libfff_c.so
+          path: vendor-fff/"$GITHUB_WORKSPACE/out/libfff_c.so"
 
   suites:
     runs-on: ubuntu-latest
