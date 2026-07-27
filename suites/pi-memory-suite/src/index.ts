@@ -1,5 +1,5 @@
-import piHermesMemory from "/data/data/com.termux/files/home/workspace/pi-hermes-memory/src/index.ts";
-import contextMode from "/data/data/com.termux/files/home/workspace/context-mode-termux/build/adapters/pi/extension.js";
+import piHermesMemory from "../../../vendor/pi-hermes-memory/src/index.ts";
+import contextMode from "../../../vendor/context-mode/build/adapters/pi/extension.js";
 
 export default function piMemorySuite(pi: any) {
   if (typeof piHermesMemory === "function") piHermesMemory(pi);

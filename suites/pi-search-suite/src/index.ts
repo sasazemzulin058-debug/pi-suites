@@ -1,7 +1,7 @@
-import piLens from "/data/data/com.termux/files/home/.pi/agent/npm/node_modules/pi-lens/dist/index.js";
-import piReadseek from "/data/data/com.termux/files/home/.pi/agent/npm/node_modules/pi-readseek/dist/index.js";
-import piShazam from "/data/data/com.termux/files/home/.pi/agent/npm/node_modules/pi-shazam/dist/index.js";
-import piWebAccess from "/data/data/com.termux/files/home/.pi/agent/npm/node_modules/pi-web-access/index.ts";
+import piLens from "../../../vendor/pi-lens/dist/index.js";
+import piReadseek from "../../../vendor/readseek/packages/pi-readseek/index.ts";
+import piShazam from "../../../vendor/pi-shazam/dist/index.js";
+import piWebAccess from "../../../vendor/pi-web-access/index.ts";
 
 export default function piSearchSuite(pi: any) {
   if (typeof piLens === "function") piLens(pi);
