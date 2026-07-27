@@ -49,7 +49,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: cli-ast-grep-${{ matrix.name }}
-          path: vendor-ast-grep/"$GITHUB_WORKSPACE/out/ast-grep-${{ matrix.name }}"
+          path: out/ast-grep-${{ matrix.name }}
 
   readseek:
     strategy:
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: cli-readseek-${{ matrix.name }}
-          path: vendor-readseek/"$GITHUB_WORKSPACE/out/readseek-${{ matrix.name }}"
+          path: out/readseek-${{ matrix.name }}
 
   fff:
     runs-on: ubuntu-latest
@@ -141,12 +141,13 @@ jobs:
           git clone --depth 1 https://github.com/nicobailon/pi-web-access.git vendor/pi-web-access || true
           (cd vendor/pi-shazam && git apply ../../patches/pi-shazam.patch)
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
-          for d in vendor/pi-lens vendor/pi-shazam vendor/readseek vendor/pi-hermes-memory vendor/pi-web-access; do
+          for d in vendor/pi-lens vendor/pi-shazam vendor/pi-hermes-memory vendor/pi-web-access; do
             if [ -d "$d" ]; then
               (cd "$d" && rm -f package-lock.json npm-shrinkwrap.json && npm install --ignore-scripts --legacy-peer-deps --no-package-lock)
             fi
           done
-          # context-mode is not bundled in this suite yet; its optional peer @earendil-works/pi-tui@0.70.0 was removed from npm.
+          # readseek CLI is built by the separate Rust job; only its Pi package is installed here.
+          (cd vendor/readseek/packages/pi-readseek && npm install --ignore-scripts --legacy-peer-deps --no-package-lock)
       - name: Bundle suites
         shell: bash
         run: |
