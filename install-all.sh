@@ -34,7 +34,8 @@ mkdir -p "$AGENT_NPM"
 for pkg in pi-search-suite pi-memory-suite pi-execution-suite; do
   echo "--> Installing $pkg..."
   download_asset "$pkg-1.0.0.tgz" "$TMP_DIR/$pkg.tgz"
-  npm install --prefix "$AGENT_NPM" --no-package-lock --ignore-scripts "$TMP_DIR/$pkg.tgz" >/dev/null
+  mkdir -p "$AGENT_NPM/node_modules/$pkg"
+  tar -xzf "$TMP_DIR/$pkg.tgz" -C "$AGENT_NPM/node_modules/$pkg" --strip-components=1
  done
 
 echo "✅ Pi suites, CLI binaries, and native library installed successfully!"
