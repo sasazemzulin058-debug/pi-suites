@@ -59,7 +59,6 @@ jobs:
           git clone --depth 1 https://github.com/aliou/pi-processes.git        vendor/pi-processes     || true
           git clone --depth 1 https://github.com/tintinweb/pi-schedule-prompt.git vendor/pi-schedule-prompt || true
           git clone --depth 1 https://github.com/sebaxzero/pi-loop-police.git  vendor/pi-loop-police   || true
-          git clone --depth 1 https://github.com/xynogen/pix-mono.git          vendor/pix-mono
 
       - name: Apply Android/Termux patches
         run: |
@@ -69,7 +68,6 @@ jobs:
           (cd vendor/pi-shazam        && git apply ../../patches/pi-shazam.patch)
           (cd vendor/pi-hermes-memory && git apply ../../patches/pi-hermes-memory.patch)
           (cd vendor/context-mode     && git apply ../../patches/context-mode.patch)
-          (cd vendor/pix-mono         && git apply ../../patches/pix-mono.patch)
           (cd vendor/fff              && git apply ../../patches/fff.patch)
 
       - name: Build ast-grep CLI (linux-x64)
