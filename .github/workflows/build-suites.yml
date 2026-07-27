@@ -163,7 +163,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          mkdir -p suites/pi-search-suite/dist suites/pi-memory-suite/dist suites/pi-execution-suite/dist
+          mkdir -p artifacts suites/pi-search-suite/dist suites/pi-memory-suite/dist suites/pi-execution-suite/dist
           ext='--external:node:* --external:@earendil-works/* --external:@ast-grep/napi --external:@ast-grep/napi-* --external:*.node --external:typebox --external:better-sqlite3'
           esbuild vendor/pi-lens/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-lens.js $ext
           esbuild vendor/pi-shazam/dist/index.js --bundle --platform=node --format=cjs --outfile=suites/pi-search-suite/dist/pi-shazam.js $ext
